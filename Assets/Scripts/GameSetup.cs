@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -36,7 +37,7 @@ public class GameSetup : MonoBehaviour
         ballRb.gravityScale = 0f;
         ballRb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         ballRb.freezeRotation = true;
-        var ballCol = ball.AddComponent<BoxCollider2D>();
+        ball.AddComponent<BoxCollider2D>();
         var ballCtrl = ball.AddComponent<BallController>();
 
         // Bouncy physics material
@@ -63,12 +64,16 @@ public class GameSetup : MonoBehaviour
         rpRb.bodyType = RigidbodyType2D.Kinematic;
         rightPaddle.AddComponent<BoxCollider2D>();
         var rpCtrl = rightPaddle.AddComponent<PaddleController>();
-        rpCtrl.isPlayer = false; // AI by default
+        rpCtrl.isPlayer = false;
         rpCtrl.ball = ball.transform;
 
         // --- Walls (top and bottom) ---
         CreateWall("TopWall", new Vector3(0f, 6f, 0f), new Vector3(20f, 1f, 1f));
         CreateWall("BottomWall", new Vector3(0f, -6f, 0f), new Vector3(20f, 1f, 1f));
+
+        // --- Border lines (visible boundary indicators) ---
+        CreateQuad("TopBorder", new Vector3(0f, 5.5f, 0f), new Vector3(18f, 0.06f, 1f), greenMat);
+        CreateQuad("BottomBorder", new Vector3(0f, -5.5f, 0f), new Vector3(18f, 0.06f, 1f), greenMat);
 
         // --- Center Line (visual only) ---
         for (float y = -5.5f; y <= 5.5f; y += 1f)
@@ -96,20 +101,30 @@ public class GameSetup : MonoBehaviour
         var rgZone = rightGoal.AddComponent<GoalZone>();
         rgZone.isLeftGoal = false;
 
-        // --- UI / Scoreboard ---
+        // =============================================
+        // UI
+        // =============================================
+
+        // EventSystem is required for UI buttons to receive mouse clicks
+        GameObject eventSystem = new GameObject("EventSystem");
+        eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
+        eventSystem.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+
         GameObject canvas = new GameObject("Canvas");
         var c = canvas.AddComponent<Canvas>();
         c.renderMode = RenderMode.ScreenSpaceOverlay;
-        var scaler = canvas.AddComponent<UnityEngine.UI.CanvasScaler>();
-        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        c.sortingOrder = 10;
+        var scaler = canvas.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280f, 720f);
         scaler.matchWidthOrHeight = 0.5f;
-        canvas.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        canvas.AddComponent<GraphicRaycaster>();
 
-        TextMeshProUGUI leftScoreText = CreateScoreText(canvas.transform, "LeftScore", new Vector2(-200f, 300f));
-        TextMeshProUGUI rightScoreText = CreateScoreText(canvas.transform, "RightScore", new Vector2(200f, 300f));
+        // --- Scores (above the top border line) ---
+        TextMeshProUGUI leftScoreText = CreateScoreText(canvas.transform, "LeftScore", new Vector2(-200f, 335f));
+        TextMeshProUGUI rightScoreText = CreateScoreText(canvas.transform, "RightScore", new Vector2(200f, 335f));
 
-        // Win/game-over message (hidden by default)
+        // --- Win text (center, hidden) ---
         GameObject winObj = new GameObject("WinText");
         winObj.transform.SetParent(canvas.transform, false);
         var winRt = winObj.AddComponent<RectTransform>();
@@ -123,6 +138,41 @@ public class GameSetup : MonoBehaviour
         winTmp.fontStyle = FontStyles.Bold;
         winObj.SetActive(false);
 
+        // --- Settings icon (top-left) ---
+        GameObject settingsBtn = CreateIconButton(canvas.transform, "SettingsBtn",
+            new Vector2(35f, -35f), TextAnchor.UpperLeft, "*", true);
+        GameObject settingsPanel = CreateSettingsPanel(canvas.transform, ballCtrl);
+        settingsPanel.SetActive(false);
+        settingsBtn.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            settingsPanel.SetActive(!settingsPanel.activeSelf);
+            // Close help if open
+            var helpPanel = canvas.transform.Find("HelpPanel");
+            if (helpPanel != null && helpPanel.gameObject.activeSelf)
+                helpPanel.gameObject.SetActive(false);
+        });
+
+        // --- Help icon (top-right) ---
+        GameObject helpBtn = CreateIconButton(canvas.transform, "HelpBtn",
+            new Vector2(-35f, -35f), TextAnchor.UpperRight, "?", false);
+        GameObject helpPanel = CreateHelpPanel(canvas.transform);
+        helpPanel.SetActive(false);
+        helpBtn.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            helpPanel.SetActive(!helpPanel.activeSelf);
+            // Close settings if open
+            if (settingsPanel.activeSelf)
+                settingsPanel.SetActive(false);
+        });
+
+        // --- Sound Manager ---
+        GameObject sm = new GameObject("SoundManager");
+        var sound = sm.AddComponent<SoundManager>();
+        sound.wallBounce = SoundManager.GenerateWallBounce();
+        sound.paddleHit = SoundManager.GeneratePaddleHit();
+        sound.score = SoundManager.GenerateScore();
+        sound.win = SoundManager.GenerateWin();
+
         // --- Game Manager ---
         GameObject gm = new GameObject("GameManager");
         var manager = gm.AddComponent<GameManager>();
@@ -132,6 +182,298 @@ public class GameSetup : MonoBehaviour
         manager.ball = ballCtrl;
     }
 
+    // =============================================
+    // Settings Panel
+    // =============================================
+    GameObject CreateSettingsPanel(Transform parent, BallController ball)
+    {
+        GameObject panel = CreatePanel(parent, "SettingsPanel", new Vector2(220f, 330f),
+            new Vector2(140f, -90f), TextAnchor.UpperLeft);
+        panel.AddComponent<RectMask2D>();
+
+        // Title                                    Y from top:
+        CreatePanelText(panel.transform, "SettingsTitle", "SETTINGS",
+            new Vector2(0f, -10f), 22, FontStyles.Bold, TextAlignmentOptions.Center, 30f);   // -10
+
+        // Speed label
+        var speedLabel = CreatePanelText(panel.transform, "SpeedLabel", "Speed: MEDIUM",
+            new Vector2(0f, -50f), 18, FontStyles.Normal, TextAlignmentOptions.Center, 25f);  // -50
+
+        // Speed buttons (30px gap below label)
+        CreatePanelButton(panel.transform, "SlowBtn", "SLOW", new Vector2(-70f, -100f), () =>
+        {
+            if (GameManager.Instance != null) GameManager.Instance.SetSpeed(5f, 0.3f, 12f);
+            speedLabel.text = "Speed: SLOW";
+        });
+        CreatePanelButton(panel.transform, "MedBtn", "MED", new Vector2(0f, -100f), () =>
+        {
+            if (GameManager.Instance != null) GameManager.Instance.SetSpeed(8f, 0.5f, 20f);
+            speedLabel.text = "Speed: MEDIUM";
+        });
+        CreatePanelButton(panel.transform, "FastBtn", "FAST", new Vector2(70f, -100f), () =>
+        {
+            if (GameManager.Instance != null) GameManager.Instance.SetSpeed(12f, 0.8f, 28f);
+            speedLabel.text = "Speed: FAST";
+        });
+
+        // Sound label (gap after speed buttons)
+        var soundLabel = CreatePanelText(panel.transform, "SoundLabel", "Sound: ON",
+            new Vector2(0f, -140f), 18, FontStyles.Normal, TextAlignmentOptions.Center, 25f); // -140
+
+        // Sound buttons (30px gap below label)
+        CreatePanelButton(panel.transform, "SoundOnBtn", "ON", new Vector2(-35f, -190f), () =>
+        {
+            if (SoundManager.Instance != null) SoundManager.Instance.SetMuted(false);
+            soundLabel.text = "Sound: ON";
+        });
+        CreatePanelButton(panel.transform, "SoundOffBtn", "OFF", new Vector2(35f, -190f), () =>
+        {
+            if (SoundManager.Instance != null) SoundManager.Instance.SetMuted(true);
+            soundLabel.text = "Sound: OFF";
+        });
+
+        // Win score label
+        CreatePanelText(panel.transform, "WinScoreInfo", "Win Score: 3",
+            new Vector2(0f, -230f), 16, FontStyles.Normal, TextAlignmentOptions.Center, 25f); // -230
+
+        // Close hint
+        CreatePanelText(panel.transform, "CloseHint", "click gear to close",
+            new Vector2(0f, -270f), 14, FontStyles.Italic, TextAlignmentOptions.Center, 25f); // -270
+
+        return panel;
+    }
+
+    void CreatePanelButton(Transform parent, string name, string label, Vector2 pos, UnityEngine.Events.UnityAction onClick)
+    {
+        GameObject btnObj = new GameObject(name);
+        btnObj.transform.SetParent(parent, false);
+        var rt = btnObj.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 1f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = new Vector2(60f, 30f);
+
+        var img = btnObj.AddComponent<Image>();
+        img.color = new Color(0f, 0.25f, 0.05f, 0.9f);
+
+        var btn = btnObj.AddComponent<Button>();
+        var colors = btn.colors;
+        colors.highlightedColor = new Color(0f, 0.6f, 0.15f);
+        colors.pressedColor = new Color(0f, 1f, 0.2f);
+        btn.colors = colors;
+        btn.onClick.AddListener(onClick);
+
+        GameObject txtObj = new GameObject("Label");
+        txtObj.transform.SetParent(btnObj.transform, false);
+        var txtRt = txtObj.AddComponent<RectTransform>();
+        txtRt.anchorMin = Vector2.zero;
+        txtRt.anchorMax = Vector2.one;
+        txtRt.offsetMin = Vector2.zero;
+        txtRt.offsetMax = Vector2.zero;
+        var tmp = txtObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = 14;
+        tmp.color = new Color(0f, 1f, 0.2f);
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.fontStyle = FontStyles.Bold;
+    }
+
+    // =============================================
+    // Help Panel
+    // =============================================
+    GameObject CreateHelpPanel(Transform parent)
+    {
+        GameObject panel = CreatePanel(parent, "HelpPanel", new Vector2(300f, 520f),
+            new Vector2(-180f, -90f), TextAnchor.UpperRight);
+
+        // Enable clipping so nothing renders outside the panel
+        var mask = panel.AddComponent<RectMask2D>();
+
+        CreatePanelText(panel.transform, "HelpTitle", "? INSTRUCTIONS",
+            new Vector2(0f, -10f), 22, FontStyles.Bold, TextAlignmentOptions.Center, 35f);
+
+        string instructions =
+            "<b>CONTROLS</b>\n" +
+            "  W / S  -  Move paddle up/down\n" +
+            "  R  -  Reset / New game\n" +
+            "  M  -  Toggle sound\n\n" +
+            "<b>OBJECTIVE</b>\n" +
+            "  First to 3 points wins.\n" +
+            "  Don't let the ball pass\n" +
+            "  your paddle!\n\n" +
+            "<b>SPEED</b>\n" +
+            "  Click gear or press 1/2/3\n" +
+            "  to change ball speed.\n\n" +
+            "<i>click ? to close</i>";
+
+        CreatePanelText(panel.transform, "HelpBody", instructions,
+            new Vector2(0f, -50f), 16, FontStyles.Normal, TextAlignmentOptions.Left, 450f);
+
+        return panel;
+    }
+
+    // =============================================
+    // Shared UI helpers
+    // =============================================
+    GameObject CreatePanel(Transform parent, string name, Vector2 size, Vector2 pos, TextAnchor corner)
+    {
+        GameObject panel = new GameObject(name);
+        panel.transform.SetParent(parent, false);
+        var rt = panel.AddComponent<RectTransform>();
+        rt.sizeDelta = size;
+
+        // Anchor to corner
+        if (corner == TextAnchor.UpperLeft)
+        {
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+        }
+        else // UpperRight
+        {
+            rt.anchorMin = new Vector2(1f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+        }
+        rt.anchoredPosition = pos;
+
+        var img = panel.AddComponent<Image>();
+        img.sprite = CreateOpaqueSprite();
+        img.type = Image.Type.Simple;
+        img.color = new Color(0.02f, 0.06f, 0.02f, 1f);
+
+        return panel;
+    }
+
+    TextMeshProUGUI CreatePanelText(Transform parent, string name, string text, Vector2 pos, int fontSize, FontStyles style, TextAlignmentOptions align = TextAlignmentOptions.Center, float height = 35f)
+    {
+        GameObject obj = new GameObject(name);
+        obj.transform.SetParent(parent, false);
+        var rt = obj.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 1f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = new Vector2(270f, height);
+        var tmp = obj.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+        tmp.color = new Color(0f, 1f, 0.2f);
+        tmp.alignment = align;
+        tmp.fontStyle = style;
+        tmp.richText = true;
+        return tmp;
+    }
+
+    GameObject CreateIconButton(Transform parent, string name, Vector2 pos, TextAnchor corner, string icon, bool useGearSprite)
+    {
+        GameObject btnObj = new GameObject(name);
+        btnObj.transform.SetParent(parent, false);
+        var rt = btnObj.AddComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(50f, 50f);
+
+        if (corner == TextAnchor.UpperLeft)
+        {
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+        }
+        else
+        {
+            rt.anchorMin = new Vector2(1f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+        }
+        rt.anchoredPosition = pos;
+
+        var img = btnObj.AddComponent<Image>();
+        img.color = new Color(0f, 0.15f, 0.04f, 0.8f);
+
+        var btn = btnObj.AddComponent<Button>();
+        var colors = btn.colors;
+        colors.highlightedColor = new Color(0f, 0.4f, 0.1f);
+        colors.pressedColor = new Color(0f, 0.7f, 0.18f);
+        btn.colors = colors;
+
+        if (useGearSprite)
+        {
+            // Draw a gear icon as a sprite (TMP default font lacks gear unicode)
+            GameObject gearObj = new GameObject("GearIcon");
+            gearObj.transform.SetParent(btnObj.transform, false);
+            var gearRt = gearObj.AddComponent<RectTransform>();
+            gearRt.anchorMin = Vector2.zero;
+            gearRt.anchorMax = Vector2.one;
+            gearRt.offsetMin = new Vector2(8f, 8f);
+            gearRt.offsetMax = new Vector2(-8f, -8f);
+            var gearImg = gearObj.AddComponent<Image>();
+            gearImg.sprite = CreateGearSprite();
+            gearImg.color = new Color(0f, 1f, 0.2f);
+            gearImg.raycastTarget = false;
+        }
+        else
+        {
+            // Text icon (for characters the font supports)
+            GameObject txtObj = new GameObject("Icon");
+            txtObj.transform.SetParent(btnObj.transform, false);
+            var txtRt = txtObj.AddComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero;
+            txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = Vector2.zero;
+            txtRt.offsetMax = Vector2.zero;
+            var tmp = txtObj.AddComponent<TextMeshProUGUI>();
+            tmp.text = icon;
+            tmp.fontSize = 30;
+            tmp.color = new Color(0f, 1f, 0.2f);
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.raycastTarget = false;
+        }
+
+        return btnObj;
+    }
+
+    Sprite CreateGearSprite()
+    {
+        int size = 64;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Color clear = Color.clear;
+        Color white = Color.white;
+        float center = size / 2f;
+        float outerR = size * 0.45f;
+        float innerR = size * 0.28f;
+        float holeR = size * 0.14f;
+        int teeth = 8;
+
+        for (int x = 0; x < size; x++)
+        {
+            for (int y = 0; y < size; y++)
+            {
+                float dx = x - center;
+                float dy = y - center;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                float angle = Mathf.Atan2(dy, dx);
+
+                // Tooth pattern: oscillate between inner and outer radius
+                float toothWave = Mathf.Cos(angle * teeth);
+                float gearR = toothWave > 0.2f ? outerR : innerR;
+
+                if (dist < gearR && dist > holeR)
+                    tex.SetPixel(x, y, white);
+                else
+                    tex.SetPixel(x, y, clear);
+            }
+        }
+
+        tex.Apply();
+        tex.filterMode = FilterMode.Bilinear;
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+    }
+
+    // =============================================
+    // Game object helpers
+    // =============================================
     GameObject CreateQuad(string name, Vector3 position, Vector3 scale, Material mat)
     {
         GameObject obj = new GameObject(name);
@@ -173,6 +515,16 @@ public class GameSetup : MonoBehaviour
     Sprite CreateWhiteSquareSprite()
     {
         Texture2D tex = new Texture2D(4, 4);
+        Color[] pixels = new Color[16];
+        for (int i = 0; i < 16; i++) pixels[i] = Color.white;
+        tex.SetPixels(pixels);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 4f);
+    }
+
+    Sprite CreateOpaqueSprite()
+    {
+        Texture2D tex = new Texture2D(4, 4, TextureFormat.RGB24, false);
         Color[] pixels = new Color[16];
         for (int i = 0; i < 16; i++) pixels[i] = Color.white;
         tex.SetPixels(pixels);

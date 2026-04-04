@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            if (SoundManager.Instance != null) SoundManager.Instance.PlayScore();
             ball.ResetBall();
         }
     }
@@ -53,6 +54,7 @@ public class GameManager : MonoBehaviour
     void EndGame(string message)
     {
         gameOver = true;
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayWin();
         if (winText != null)
         {
             winText.text = message + "\nPRESS R TO PLAY AGAIN";
@@ -83,5 +85,27 @@ public class GameManager : MonoBehaviour
                 winText.gameObject.SetActive(false);
             ball.ResetBall();
         }
+
+        // Keyboard speed shortcuts (also available via Settings panel)
+        if (Input.GetKeyDown(KeyCode.Alpha1)) SetSpeed(5f, 0.3f, 12f);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) SetSpeed(8f, 0.5f, 20f);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) SetSpeed(12f, 0.8f, 28f);
+
+        // Sound toggle
+        if (Input.GetKeyDown(KeyCode.M)) ToggleSound();
+    }
+
+    public void SetSpeed(float initial, float increase, float max)
+    {
+        ball.initialSpeed = initial;
+        ball.speedIncrease = increase;
+        ball.maxSpeed = max;
+        ball.ApplySpeedChange();
+    }
+
+    public void ToggleSound()
+    {
+        if (SoundManager.Instance != null)
+            SoundManager.Instance.SetMuted(!SoundManager.Instance.IsMuted());
     }
 }

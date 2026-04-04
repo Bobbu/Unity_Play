@@ -1,0 +1,53 @@
+using UnityEditor;
+using UnityEngine;
+
+public class BuildScript
+{
+    [MenuItem("Build/Build Mac")]
+    public static void BuildMac()
+    {
+        string[] scenes = GetBuildScenes();
+        if (scenes.Length == 0)
+        {
+            Debug.LogError("No scenes found in build settings or Assets/Scenes/");
+            return;
+        }
+
+        BuildPlayerOptions options = new BuildPlayerOptions
+        {
+            scenes = scenes,
+            locationPathName = "Build/Mac/UnityPong.app",
+            target = BuildTarget.StandaloneOSX,
+            options = BuildOptions.None
+        };
+
+        var report = BuildPipeline.BuildPlayer(options);
+        if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+            Debug.Log("Build succeeded: " + options.locationPathName);
+        else
+            Debug.LogError("Build failed");
+    }
+
+    static string[] GetBuildScenes()
+    {
+        // Use scenes from build settings if configured
+        var buildSettingsScenes = EditorBuildSettings.scenes;
+        if (buildSettingsScenes.Length > 0)
+        {
+            var paths = new System.Collections.Generic.List<string>();
+            foreach (var s in buildSettingsScenes)
+            {
+                if (s.enabled)
+                    paths.Add(s.path);
+            }
+            if (paths.Count > 0) return paths.ToArray();
+        }
+
+        // Fall back to finding scene files
+        string[] guids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" });
+        string[] scenePaths = new string[guids.Length];
+        for (int i = 0; i < guids.Length; i++)
+            scenePaths[i] = AssetDatabase.GUIDToAssetPath(guids[i]);
+        return scenePaths;
+    }
+}

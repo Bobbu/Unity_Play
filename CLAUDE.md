@@ -4,44 +4,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Unity 2D Pong game ("Unity Pong" by CatalystApps) — a fully programmatic game that requires no manual scene setup. All GameObjects, physics, UI, and rendering are created at runtime by `GameSetup.cs`. This is an experimental project with plans to evolve into an AR app targeting Viture headsets.
+Unity 2D Pong game ("Unity Pong" by Any Stupid Idea / CatalystApps) — a fully programmatic game that requires no manual scene setup. All GameObjects, physics, UI, audio, and rendering are created at runtime by `GameSetup.cs`. This is an experimental project with plans to evolve into an AR app.
 
 ## Getting Started
 
-1. Open `Unity_Play/` folder in Unity Hub
-2. Create a new empty scene (`File → New Scene → Empty`)
-3. Add an empty GameObject and attach the `GameSetup` script
+1. Open `Unity_Play/` folder in Unity Hub (requires Unity 6 / 6000.4.x)
+2. Import TMP Essentials if prompted
+3. Open `Assets/Scenes/Pong.unity`
 4. Press Play
 
-No assets, prefabs, or scene wiring needed — everything is code-generated.
+## Build
+
+- **Editor:** Build > Build Mac (provided by `Assets/Scripts/Editor/BuildScript.cs`)
+- **CLI:** Close Unity first, then run the batch build command (see README.md)
+- **Output:** `Build/Mac/UnityPong.app`
 
 ## Architecture
 
-The game bootstraps entirely from `GameSetup.Awake()`, which instantiates all other components:
+The game bootstraps entirely from `GameSetup.Awake()`, which instantiates all components:
 
-- **GameSetup** → Creates camera, ball, paddles, walls, goals, UI canvas, and GameManager at runtime
-- **GameManager** (singleton) → Score state, UI updates, reset logic. Called by GoalZone triggers.
-- **BallController** → Physics-based movement, speed ramp on paddle hits, direction from hit position
+- **GameSetup** → Creates camera, ball, paddles, walls, border lines, goals, UI (canvas, scores, settings panel, help panel, win text), EventSystem, SoundManager, and GameManager
+- **GameManager** (singleton) → Score state, win detection (first to 3), speed control (applies immediately via `BallController.ApplySpeedChange`), sound toggle
+- **BallController** → Physics-based movement with Rigidbody2D, speed ramp on paddle hits, direction from hit position
 - **PaddleController** → Dual-mode: keyboard input (W/S) for player, Y-tracking AI for opponent
 - **GoalZone** → Trigger colliders behind paddles that call `GameManager.ScorePoint()`
+- **SoundManager** (singleton) → Procedural audio generation (square/sine waves), mute support
 
-All sprites are generated from a 4x4 white texture at runtime. No external art assets.
+All sprites are generated from a 4x4 white texture at runtime. The gear icon is a procedurally drawn 64x64 texture. Audio clips are synthesized at 44100Hz.
+
+## UI Pattern
+
+Panels (Settings, Help) use top-anchored `RectTransform` layout with `RectMask2D` clipping. Buttons require `EventSystem` + `StandaloneInputModule` (created by GameSetup). Panel backgrounds use `CreateOpaqueSprite()` with `TextureFormat.RGB24` (no alpha channel) to ensure full opacity.
 
 ## Tags
 
-Two custom tags are required and defined in `TagManager.asset`: `Ball` and `Paddle`. These are used for collision detection in `BallController.OnCollisionEnter2D`.
+Two custom tags defined in `TagManager.asset`: `Ball` and `Paddle`. Used for collision detection in `BallController.OnCollisionEnter2D`.
 
 ## Dependencies
 
-Defined in `Packages/manifest.json`: 2D Sprite, TextMeshPro (3.0.6), uGUI, Physics2D, UI, IMGUI.
+`Packages/manifest.json`: 2D Sprite, TextMeshPro 3.0.6, uGUI, Physics2D, UI, IMGUI, Audio.
 
 ## Controls
 
-- **W/S** — left paddle (player)
-- **Right paddle** — AI-controlled
-- **R** — reset scores and ball
+- **W/S** — move left paddle
+- **1/2/3** — ball speed (Slow/Medium/Fast)
+- **M** — toggle sound
+- **R** — reset/new game
+- **Mouse** — click gear (settings) and ? (help) icons
 
-## Legal & Research Docs
+## Key Settings (ProjectSettings.asset)
 
-- `docs/legal/TERMS_OF_USE.md` — AR safety/liability terms (DRAFT, not legally reviewed, targets Viture headset use)
-- `docs/research/spotify_integration.md` — Spotify integration research (parked; no native Unity streaming SDK exists)
+- Window: 1920x1080, windowed mode, resizable
+- `defaultIsNativeResolution: 0` — uses specified dimensions
+- `fullscreenMode: 3` — windowed
+
+## Docs
+
+- `docs/legal/TERMS_OF_USE.md` — AR safety/liability terms (DRAFT)
+- `docs/research/ar_glasses_gaming_analysis.md` — AR headset comparison for gaming
+- `docs/research/spotify_integration.md` — Spotify integration research (parked)
+- `docs/database/schema.sql` + `seed_data.sql` — Marketplace DDL and test data

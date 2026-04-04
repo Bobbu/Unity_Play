@@ -31,10 +31,23 @@ public class BallController : MonoBehaviour
         Invoke(nameof(LaunchBall), 1f);
     }
 
+    public void ApplySpeedChange()
+    {
+        if (rb == null) return;
+        Vector2 vel = rb.linearVelocity;
+        if (vel.sqrMagnitude > 0.01f)
+        {
+            currentSpeed = initialSpeed;
+            rb.linearVelocity = vel.normalized * currentSpeed;
+        }
+    }
+
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Paddle"))
         {
+            if (SoundManager.Instance != null) SoundManager.Instance.PlayPaddleHit();
+
             currentSpeed = Mathf.Min(currentSpeed + speedIncrease, maxSpeed);
 
             float paddleCenterY = collision.transform.position.y;
@@ -44,6 +57,11 @@ public class BallController : MonoBehaviour
             float yDir = hitPoint * 2f;
             Vector2 direction = new Vector2(xDir, yDir).normalized;
             rb.linearVelocity = direction * currentSpeed;
+        }
+        else
+        {
+            // Wall bounce
+            if (SoundManager.Instance != null) SoundManager.Instance.PlayWallBounce();
         }
     }
 }

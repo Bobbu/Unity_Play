@@ -6,6 +6,17 @@ public class BuildScript
     [MenuItem("Build/Build Mac")]
     public static void BuildMac()
     {
+        Build("Build/Mac/UnityPong.app", BuildTarget.StandaloneOSX);
+    }
+
+    [MenuItem("Build/Build iOS")]
+    public static void BuildIOS()
+    {
+        Build("Build/iOS", BuildTarget.iOS);
+    }
+
+    static void Build(string path, BuildTarget target)
+    {
         string[] scenes = GetBuildScenes();
         if (scenes.Length == 0)
         {
@@ -16,14 +27,14 @@ public class BuildScript
         BuildPlayerOptions options = new BuildPlayerOptions
         {
             scenes = scenes,
-            locationPathName = "Build/Mac/UnityPong.app",
-            target = BuildTarget.StandaloneOSX,
+            locationPathName = path,
+            target = target,
             options = BuildOptions.None
         };
 
         var report = BuildPipeline.BuildPlayer(options);
         if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
-            Debug.Log("Build succeeded: " + options.locationPathName);
+            Debug.Log("Build succeeded: " + path);
         else
             Debug.LogError("Build failed");
     }

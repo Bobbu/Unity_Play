@@ -19,7 +19,20 @@ public class GameSetup : MonoBehaviour
         Camera.main.clearFlags = CameraClearFlags.SolidColor;
         Camera.main.backgroundColor = Color.black;
         Camera.main.orthographic = true;
-        Camera.main.orthographicSize = 6f;
+
+        // Adapt camera to aspect ratio — ensure full game area (18 units wide, 12 tall) is visible
+        float targetAspect = 18f / 12f; // 1.5 (game area width / height)
+        float screenAspect = (float)Screen.width / Screen.height;
+        if (screenAspect < targetAspect)
+        {
+            // Screen is taller than game area — increase ortho size to fit width
+            Camera.main.orthographicSize = 9f / screenAspect;
+        }
+        else
+        {
+            // Screen is wider than game area — 6 units half-height is fine
+            Camera.main.orthographicSize = 6f;
+        }
 
         // Remove the default directional light if present
         var light = FindAnyObjectByType<Light>();
@@ -120,13 +133,24 @@ public class GameSetup : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
         canvas.AddComponent<GraphicRaycaster>();
 
+        // Safe area container — all UI goes inside this so it avoids
+        // the iPhone notch/Dynamic Island and rounded corners
+        GameObject safeArea = new GameObject("SafeArea");
+        safeArea.transform.SetParent(canvas.transform, false);
+        var safeRt = safeArea.AddComponent<RectTransform>();
+        safeRt.anchorMin = Vector2.zero;
+        safeRt.anchorMax = Vector2.one;
+        safeRt.offsetMin = Vector2.zero;
+        safeRt.offsetMax = Vector2.zero;
+        safeArea.AddComponent<SafeAreaHandler>();
+
         // --- Scores (above the top border line) ---
-        TextMeshProUGUI leftScoreText = CreateScoreText(canvas.transform, "LeftScore", new Vector2(-200f, 335f));
-        TextMeshProUGUI rightScoreText = CreateScoreText(canvas.transform, "RightScore", new Vector2(200f, 335f));
+        TextMeshProUGUI leftScoreText = CreateScoreText(safeArea.transform, "LeftScore", -200f);
+        TextMeshProUGUI rightScoreText = CreateScoreText(safeArea.transform, "RightScore", 200f);
 
         // --- Win text (center, hidden) ---
         GameObject winObj = new GameObject("WinText");
-        winObj.transform.SetParent(canvas.transform, false);
+        winObj.transform.SetParent(safeArea.transform, false);
         var winRt = winObj.AddComponent<RectTransform>();
         winRt.anchoredPosition = Vector2.zero;
         winRt.sizeDelta = new Vector2(800f, 200f);
@@ -139,23 +163,23 @@ public class GameSetup : MonoBehaviour
         winObj.SetActive(false);
 
         // --- Settings icon (top-left) ---
-        GameObject settingsBtn = CreateIconButton(canvas.transform, "SettingsBtn",
+        GameObject settingsBtn = CreateIconButton(safeArea.transform, "SettingsBtn",
             new Vector2(35f, -35f), TextAnchor.UpperLeft, "*", true);
-        GameObject settingsPanel = CreateSettingsPanel(canvas.transform, ballCtrl);
+        GameObject settingsPanel = CreateSettingsPanel(safeArea.transform, ballCtrl);
         settingsPanel.SetActive(false);
         settingsBtn.GetComponent<Button>().onClick.AddListener(() =>
         {
             settingsPanel.SetActive(!settingsPanel.activeSelf);
             // Close help if open
-            var helpPanel = canvas.transform.Find("HelpPanel");
-            if (helpPanel != null && helpPanel.gameObject.activeSelf)
-                helpPanel.gameObject.SetActive(false);
+            var hp = safeArea.transform.Find("HelpPanel");
+            if (hp != null && hp.gameObject.activeSelf)
+                hp.gameObject.SetActive(false);
         });
 
         // --- Help icon (top-right) ---
-        GameObject helpBtn = CreateIconButton(canvas.transform, "HelpBtn",
+        GameObject helpBtn = CreateIconButton(safeArea.transform, "HelpBtn",
             new Vector2(-35f, -35f), TextAnchor.UpperRight, "?", false);
-        GameObject helpPanel = CreateHelpPanel(canvas.transform);
+        GameObject helpPanel = CreateHelpPanel(safeArea.transform);
         helpPanel.SetActive(false);
         helpBtn.GetComponent<Button>().onClick.AddListener(() =>
         {
@@ -296,6 +320,7 @@ public class GameSetup : MonoBehaviour
         string instructions =
             "<b>CONTROLS</b>\n" +
             "  W / S  -  Move paddle up/down\n" +
+            "  Touch  -  Drag left side of screen\n" +
             "  R  -  Reset / New game\n" +
             "  M  -  Toggle sound\n\n" +
             "<b>OBJECTIVE</b>\n" +
@@ -303,9 +328,9 @@ public class GameSetup : MonoBehaviour
             "  Don't let the ball pass\n" +
             "  your paddle!\n\n" +
             "<b>SPEED</b>\n" +
-            "  Click gear or press 1/2/3\n" +
+            "  Tap gear or press 1/2/3\n" +
             "  to change ball speed.\n\n" +
-            "<i>click ? to close</i>";
+            "<i>tap ? to close</i>";
 
         CreatePanelText(panel.transform, "HelpBody", instructions,
             new Vector2(0f, -50f), 16, FontStyles.Normal, TextAlignmentOptions.Left, 450f);
@@ -496,16 +521,20 @@ public class GameSetup : MonoBehaviour
         rb.bodyType = RigidbodyType2D.Static;
     }
 
-    TextMeshProUGUI CreateScoreText(Transform parent, string name, Vector2 position)
+    TextMeshProUGUI CreateScoreText(Transform parent, string name, float xOffset)
     {
         GameObject textObj = new GameObject(name);
         textObj.transform.SetParent(parent, false);
         var rt = textObj.AddComponent<RectTransform>();
-        rt.anchoredPosition = position;
-        rt.sizeDelta = new Vector2(200f, 100f);
+        // Anchor to top-center of safe area
+        rt.anchorMin = new Vector2(0.5f, 1f);
+        rt.anchorMax = new Vector2(0.5f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.anchoredPosition = new Vector2(xOffset, -5f);
+        rt.sizeDelta = new Vector2(200f, 80f);
         var tmp = textObj.AddComponent<TextMeshProUGUI>();
         tmp.text = "0";
-        tmp.fontSize = 72;
+        tmp.fontSize = 60;
         tmp.color = new Color(0f, 1f, 0.2f);
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.fontStyle = FontStyles.Bold;

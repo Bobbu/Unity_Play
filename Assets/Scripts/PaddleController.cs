@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PaddleController : MonoBehaviour
 {
@@ -12,11 +13,17 @@ public class PaddleController : MonoBehaviour
     public Transform ball;
     public float aiReactionSpeed = 6f;
 
+    // Touch settings
+    public float touchSmoothSpeed = 15f;
+    private float touchTargetY;
+    private bool touchActive;
+
     void Update()
     {
         if (isPlayer)
         {
-            HandlePlayerInput();
+            HandleKeyboardInput();
+            HandleTouchAndMouseInput();
         }
         else
         {
@@ -26,7 +33,7 @@ public class PaddleController : MonoBehaviour
         ClampPosition();
     }
 
-    void HandlePlayerInput()
+    void HandleKeyboardInput()
     {
         float move = 0f;
 
@@ -35,13 +42,47 @@ public class PaddleController : MonoBehaviour
         else if (Input.GetKey(downKey))
             move = -1f;
 
-        // Also support arrow keys for right paddle
-        if (upKey == KeyCode.UpArrow && Input.GetKey(KeyCode.UpArrow))
-            move = 1f;
-        else if (downKey == KeyCode.DownArrow && Input.GetKey(KeyCode.DownArrow))
-            move = -1f;
+        if (move != 0f)
+            transform.Translate(Vector2.up * move * speed * Time.deltaTime);
+    }
 
-        transform.Translate(Vector2.up * move * speed * Time.deltaTime);
+    void HandleTouchAndMouseInput()
+    {
+        // Works for both touch (mapped to mouse on mobile) and actual mouse
+        bool pressing = Input.GetMouseButton(0);
+        bool justPressed = Input.GetMouseButtonDown(0);
+
+        if (!pressing)
+        {
+            touchActive = false;
+            return;
+        }
+
+        // Skip if touching a UI element
+        if (justPressed && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            return;
+
+        // Also check for touch over UI on mobile
+        if (justPressed && Input.touchCount > 0 && EventSystem.current != null
+            && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId))
+            return;
+
+        Vector3 screenPos = Input.mousePosition;
+
+        // Only respond to touches/clicks on the left half of the screen
+        if (screenPos.x > Screen.width * 0.5f)
+            return;
+
+        touchActive = true;
+
+        // Convert screen position to world position
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, 0f));
+        touchTargetY = worldPos.y;
+
+        // Smoothly move paddle toward touch position
+        float currentY = transform.position.y;
+        float newY = Mathf.MoveTowards(currentY, touchTargetY, touchSmoothSpeed * Time.deltaTime);
+        transform.position = new Vector3(transform.position.x, newY, 0f);
     }
 
     void HandleAI()

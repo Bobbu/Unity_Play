@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Runtime.InteropServices;
 
 public class SoundManager : MonoBehaviour
 {
@@ -12,10 +13,19 @@ public class SoundManager : MonoBehaviour
     private AudioSource audioSource;
     private bool muted;
 
+#if UNITY_IOS && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern void _SetAudioSessionPlayback();
+#endif
+
     void Awake()
     {
         Instance = this;
         audioSource = gameObject.AddComponent<AudioSource>();
+
+#if UNITY_IOS && !UNITY_EDITOR
+        _SetAudioSessionPlayback();
+#endif
     }
 
     public bool IsMuted() => muted;

@@ -36,7 +36,7 @@
     .hero {
       text-align: center;
       padding: 80px 20px 60px;
-      background: linear-gradient(180deg, #0a1a0a 0%, #0d2b0d 50%, #f5f5f7 100%);
+      background: linear-gradient(180deg, #0a1a0a 0%, #0d2b0d 30%, #1a3a1a 60%, #7a9a7a 85%, #f5f5f7 100%);
     }
 
     .hero img.app-icon {
@@ -83,6 +83,13 @@
       background: #86868b;
       color: #fff;
       cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .download-btn.coming-soon {
+      background: #2a5a2a;
+      color: #8c8;
+      cursor: default;
       pointer-events: none;
     }
 
@@ -278,8 +285,8 @@
     <img class="app-icon" src="images/Pong_Me_Logo.png" alt="Pong Me app icon">
     <h1>Pong Me</h1>
     <p class="tagline">Classic retro Pong with procedural audio, adjustable AI, and that green-on-black CRT aesthetic. Free for Mac and iPhone.</p>
-    <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
-      Download for macOS
+    <a class="download-btn coming-soon" href="#">
+      Download Coming Soon
     </a>
     <p class="download-note">Free &middot; macOS 12+ &middot; Also available on iOS</p>
   </section>
@@ -330,8 +337,8 @@
   <!-- CTA -->
   <section class="cta">
     <h2>Ready to get ponged?</h2>
-    <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
-      Download for macOS
+    <a class="download-btn coming-soon" href="#">
+      Download Coming Soon
     </a>
     <p class="download-note">Free &middot; macOS 12+ &middot; Also available on iOS</p>
   </section>

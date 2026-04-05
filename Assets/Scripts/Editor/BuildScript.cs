@@ -6,7 +6,7 @@ public class BuildScript
     [MenuItem("Build/Build Mac")]
     public static void BuildMac()
     {
-        Build("Build/Mac/UnityPong.app", BuildTarget.StandaloneOSX);
+        Build("Build/Mac/PongMe.app", BuildTarget.StandaloneOSX);
     }
 
     [MenuItem("Build/Build iOS")]

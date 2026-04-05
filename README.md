@@ -1,4 +1,4 @@
-# Unity Pong
+# Pong Me
 
 A retro-styled Pong game built in Unity 6, with bold green-on-black visuals inspired by classic CRT monitors. Everything is generated programmatically at runtime — no manual scene wiring required.
 
@@ -35,7 +35,7 @@ A retro-styled Pong game built in Unity 6, with bold green-on-black visuals insp
     -executeMethod BuildScript.BuildMac \
     -quit
   ```
-- Output: `Build/Mac/UnityPong.app`
+- Output: `Build/Mac/PongMe.app`
 
 ## Controls
 

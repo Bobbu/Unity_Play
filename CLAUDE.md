@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Unity 2D Pong game ("Unity Pong" by Any Stupid Idea / CatalystApps) — a fully programmatic game that requires no manual scene setup. All GameObjects, physics, UI, audio, and rendering are created at runtime by `GameSetup.cs`. This is an experimental project with plans to evolve into an AR app.
+Unity 2D Pong game ("Pong Me" by Any Stupid Idea / CatalystApps) — a fully programmatic game that requires no manual scene setup. All GameObjects, physics, UI, audio, and rendering are created at runtime by `GameSetup.cs`. This is an experimental project with plans to evolve into an AR app.
 
 ## Getting Started
 
@@ -17,7 +17,7 @@ Unity 2D Pong game ("Unity Pong" by Any Stupid Idea / CatalystApps) — a fully 
 
 - **Editor:** Build > Build Mac (provided by `Assets/Scripts/Editor/BuildScript.cs`)
 - **CLI:** Close Unity first, then run the batch build command (see README.md)
-- **Output:** `Build/Mac/UnityPong.app`
+- **Output:** `Build/Mac/PongMe.app`
 
 ## Architecture
 

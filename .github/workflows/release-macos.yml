@@ -1,0 +1,134 @@
+name: Build DMG, Notarize, and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-macos:
+    runs-on: macos-latest
+    env:
+      APP_NAME: "PongMe"
+      DMG_NAME: "Pong-Me.dmg"
+      S3_BUCKET: "pong-me.anystupididea.com"
+      CLOUDFRONT_DIST_ID: "E29XY0JV1L6QI"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify app bundle exists
+        run: |
+          if [ ! -d "Build/Mac/$APP_NAME.app" ]; then
+            echo "ERROR: Build/Mac/$APP_NAME.app not found."
+            echo "Build the app locally in Unity (Build > Build Mac) before tagging."
+            exit 1
+          fi
+
+      - name: Import signing certificate
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE_P12" | base64 --decode > certificate.p12
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 build.keychain
+
+          security import certificate.p12 -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          rm certificate.p12
+
+      - name: Codesign app bundle
+        env:
+          IDENTITY: "Developer ID Application: Robert Daly (H9YFX25Z95)"
+        run: |
+          APP="Build/Mac/$APP_NAME.app"
+
+          # Sign frameworks from the inside out
+          find "$APP/Contents/Frameworks" -name "*.framework" -maxdepth 1 | while read framework; do
+            codesign --force --options runtime --sign "$IDENTITY" "$framework"
+          done
+
+          find "$APP/Contents/Frameworks" -name "*.bundle" -maxdepth 1 | while read bundle; do
+            codesign --force --options runtime --sign "$IDENTITY" "$bundle"
+          done
+
+          # Sign any dylibs
+          find "$APP" -name "*.dylib" | while read dylib; do
+            codesign --force --options runtime --sign "$IDENTITY" "$dylib"
+          done
+
+          # Sign the main app bundle
+          codesign --force --options runtime --sign "$IDENTITY" "$APP"
+
+      - name: Verify codesign
+        run: |
+          APP="Build/Mac/$APP_NAME.app"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          APP="Build/Mac/$APP_NAME.app"
+
+          create-dmg \
+            --volname "Pong Me" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "$APP_NAME.app" 150 190 \
+            --app-drop-link 450 190 \
+            --hide-extension "$APP_NAME.app" \
+            "$DMG_NAME" \
+            "$APP"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: H9YFX25Z95
+        run: |
+          xcrun notarytool submit "$DMG_NAME" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+      - name: Staple DMG
+        run: xcrun stapler staple "$DMG_NAME"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.DMG_NAME }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload DMG to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          aws s3 cp "$DMG_NAME" "s3://$S3_BUCKET/$DMG_NAME" \
+            --content-type "application/x-apple-diskimage"
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DIST_ID" \
+            --paths "/$DMG_NAME"
+
+      - name: Cleanup keychain
+        if: always()
+        run: security delete-keychain build.keychain 2>/dev/null || true

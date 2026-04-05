@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong Me - Classic Retro Pong for Mac and iPhone</title>
+  <meta name="description" content="Pong Me is a free retro-styled Pong game for macOS and iOS with procedural audio, AI difficulty, touch controls, and that classic green-on-black CRT look.">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pong-me.anystupididea.com/">
+  <meta property="og:title" content="Pong Me - Classic Retro Pong for Mac and iPhone">
+  <meta property="og:description" content="Free retro Pong game with procedural audio, adjustable AI, touch controls, and that classic green CRT aesthetic.">
+  <meta property="og:image" content="https://pong-me.anystupididea.com/images/Pong_Me_Logo.png">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Pong Me - Classic Retro Pong for Mac and iPhone">
+  <meta name="twitter:description" content="Free retro Pong game with procedural audio, adjustable AI, touch controls, and that classic green CRT aesthetic.">
+  <meta name="twitter:image" content="https://pong-me.anystupididea.com/images/Pong_Me_Logo.png">
+
+  <link rel="icon" type="image/png" href="images/Pong_Me_Logo.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1d1d1f;
+      background: #f5f5f7;
+      line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 20px 60px;
+      background: linear-gradient(180deg, #0a1a0a 0%, #0d2b0d 50%, #f5f5f7 100%);
+    }
+
+    .hero img.app-icon {
+      width: 160px;
+      height: 160px;
+      border-radius: 32px;
+      box-shadow: 0 8px 30px rgba(0,255,50,0.2);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      color: #00ff33;
+      text-shadow: 0 0 20px rgba(0,255,50,0.3);
+    }
+
+    .hero .tagline {
+      font-size: 1.25rem;
+      color: #86868b;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    .download-btn {
+      display: inline-block;
+      background: #00cc2a;
+      color: #000;
+      text-decoration: none;
+      padding: 16px 40px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    .download-btn:hover {
+      background: #00ff33;
+    }
+
+    .download-btn.disabled {
+      background: #86868b;
+      color: #fff;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .download-note {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #86868b;
+    }
+
+    .platform-note {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: #e30000;
+      font-weight: 500;
+    }
+
+    /* Sections */
+    .section {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+
+    .section h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .section p {
+      font-size: 1.1rem;
+      color: #424245;
+      margin-bottom: 16px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .feature-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .feature-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 0.95rem;
+      color: #6e6e73;
+      margin-bottom: 0;
+    }
+
+    /* Pillar cards */
+    .pillars {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .pillar {
+      text-align: center;
+      padding: 36px 28px;
+    }
+
+    .pillar-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .pillar h3 {
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+    }
+
+    .pillar p {
+      text-align: left;
+    }
+
+    @media (max-width: 768px) {
+      .pillars { grid-template-columns: 1fr; }
+    }
+
+    /* Screenshot section */
+    .screenshot-section {
+      background: #111;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .screenshot-section h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 32px;
+      color: #00ff33;
+    }
+
+    .screenshot-section p {
+      color: #86868b;
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .screenshot-card {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #333;
+    }
+
+    .screenshot-card h3 {
+      color: #00ff33;
+      font-size: 1rem;
+      margin-top: 12px;
+    }
+
+    .screenshot-card p {
+      color: #6e6e73;
+      font-size: 0.85rem;
+      margin: 4px auto 0;
+    }
+
+    /* CTA */
+    .cta {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .cta h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    footer img.asi-logo {
+      height: 50px;
+      margin-bottom: 12px;
+    }
+
+    footer p {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    footer .footer-links {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+
+    footer .footer-links a {
+      color: #888;
+    }
+
+    footer a {
+      color: #00cc2a;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img class="app-icon" src="images/Pong_Me_Logo.png" alt="Pong Me app icon">
+    <h1>Pong Me</h1>
+    <p class="tagline">Classic retro Pong with procedural audio, adjustable AI, and that green-on-black CRT aesthetic. Free for Mac and iPhone.</p>
+    <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
+      Download for macOS
+    </a>
+    <p class="download-note">Free &middot; macOS 12+ &middot; Also available on iOS</p>
+  </section>
+
+  <!-- About -->
+  <section class="section">
+    <h2>What is Pong Me?</h2>
+    <p>Pong Me is a lovingly retro take on the original Pong. Bold green paddles, a bouncing ball, and that unmistakable CRT glow &mdash; all running at 60fps on your Mac or iPhone.</p>
+    <p>Every pixel, every sound, and every sprite is generated entirely in code. No art assets, no audio files &mdash; just pure procedural craftsmanship.</p>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="features pillars">
+      <div class="feature-card pillar">
+        <div class="pillar-icon">&#127918;</div>
+        <h3>Classic Gameplay</h3>
+        <p>Player vs AI with first-to-win scoring (configurable 3, 5, or 7 points). The ball speeds up on every paddle hit, keeping each rally tense. Press R or tap PLAY AGAIN to restart instantly.</p>
+      </div>
+      <div class="feature-card pillar">
+        <div class="pillar-icon">&#127911;</div>
+        <h3>Procedural Audio</h3>
+        <p>Every sound is synthesized from square and sine waves at runtime &mdash; wall bounces, paddle hits, scoring buzzes, and a winning arpeggio fanfare. No audio files needed, just math.</p>
+      </div>
+      <div class="feature-card pillar">
+        <div class="pillar-icon">&#9881;</div>
+        <h3>Fully Configurable</h3>
+        <p>In-game Settings panel lets you adjust ball speed (Slow / Medium / Fast), AI difficulty (Easy / Medium / Hard), win score, and sound &mdash; all without leaving the game.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Platforms -->
+  <section class="section">
+    <h2>Play Anywhere</h2>
+    <div class="features">
+      <div class="feature-card">
+        <h3>&#128187; Mac</h3>
+        <p>1920x1080 windowed, resizable. Keyboard controls (W/S to move, 1/2/3 for speed, M for mute, R to reset, Cmd+Q to quit). Mouse clicks for Settings and Help panels.</p>
+      </div>
+      <div class="feature-card">
+        <h3>&#128241; iPhone</h3>
+        <p>Touch controls &mdash; drag the left side of the screen to move your paddle. Landscape-only, safe area aware (works with notch and Dynamic Island). All settings accessible via tap.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Ready to get ponged?</h2>
+    <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
+      Download for macOS
+    </a>
+    <p class="download-note">Free &middot; macOS 12+ &middot; Also available on iOS</p>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <a href="https://anystupididea.com"><img class="asi-logo" src="images/Any_Stupid_Idea_Logo.png" alt="Any Stupid Idea"></a>
+    <p>Copyright &copy; <span id="copyright-year"></span> <a href="https://anystupididea.com">Any Stupid Idea</a></p>
+    <span class="footer-links">
+      <a href="https://anystupididea.com/privacy.html">Privacy</a> | <a href="https://anystupididea.com/terms.html">Terms</a>
+    </span>
+  </footer>
+
+  <script>
+    (function() {
+      var yearEl = document.getElementById('copyright-year');
+      var startYear = 2026;
+      var currentYear = new Date().getFullYear();
+      if (yearEl) yearEl.textContent = currentYear > startYear ? startYear + '\u2013' + currentYear : startYear;
+
+      var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      if (isMac) return;
+
+      var buttons = document.querySelectorAll('.download-btn');
+      buttons.forEach(function(btn) {
+        btn.classList.add('disabled');
+        btn.removeAttribute('href');
+        btn.textContent = 'Available for macOS only';
+      });
+
+      var notes = document.querySelectorAll('.download-note');
+      notes.forEach(function(note) {
+        note.classList.add('platform-note');
+        note.textContent = 'Visit this page on a Mac to download Pong Me.';
+      });
+    })();
+  </script>
+
+</body>
+</html>

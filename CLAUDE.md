@@ -15,9 +15,10 @@ Unity 2D Pong game ("Pong Me" by Any Stupid Idea / CatalystApps) — a fully pro
 
 ## Build
 
-- **Editor:** Build > Build Mac (provided by `Assets/Scripts/Editor/BuildScript.cs`)
-- **CLI:** Close Unity first, then run the batch build command (see README.md)
-- **Output:** `Build/Mac/PongMe.app`
+- **Editor:** Build > Build Mac / Build > Build Windows (provided by `Assets/Scripts/Editor/BuildScript.cs`)
+- **CLI:** Close Unity first, then run the batch build command (see README.md). Methods: `BuildScript.BuildMac`, `BuildScript.BuildWindows`, `BuildScript.BuildIOS`.
+- **Output:** `Build/Mac/PongMe.app` or `Build/Windows/PongMe.exe` (Windows requires the entire `Build/Windows/` folder to be distributed together)
+- **Windows requires:** Windows Build Support (Mono) module installed via Unity Hub. IL2CPP isn't available when building from a Mac host.
 
 ## Architecture
 

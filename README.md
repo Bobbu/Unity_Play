@@ -37,6 +37,20 @@ A retro-styled Pong game built in Unity 6, with bold green-on-black visuals insp
   ```
 - Output: `Build/Mac/PongMe.app`
 
+### Build for Windows
+Requires the **Windows Build Support (Mono)** module installed via Unity Hub (Installs → ⚙️ → Add modules).
+- **From Unity:** Build → Build Windows
+- **From command line:**
+  ```bash
+  /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
+    -batchmode -nographics \
+    -projectPath "$(pwd)" \
+    -executeMethod BuildScript.BuildWindows \
+    -quit
+  ```
+- Output: `Build/Windows/PongMe.exe` plus `PongMe_Data/`, `UnityPlayer.dll`, and other runtime files. **All files in `Build/Windows/` must be distributed together.**
+- Note: builds are unsigned, so Windows SmartScreen will warn users on first launch (More info → Run anyway).
+
 ## Controls
 
 | Key | Action |

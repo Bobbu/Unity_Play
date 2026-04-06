@@ -5,6 +5,7 @@
 [Bb]uilds/
 [Bb]uild/*
 !Build/Mac/
+!Build/Windows/
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
 [Mm]emoryCaptures/
@@ -57,6 +58,7 @@ ignore.conf
 
 # Unity Recovery
 Assets/_Recovery/
+Assets/_Recovery.meta
 
 # CDK
 website/cdk/cdk.out/

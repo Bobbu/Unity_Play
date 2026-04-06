@@ -79,6 +79,13 @@
       background: #00ff33;
     }
 
+    .download-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     .download-btn.disabled {
       background: #86868b;
       color: #fff;
@@ -284,11 +291,16 @@
   <section class="hero">
     <img class="app-icon" src="images/Pong_Me_Logo.png" alt="Pong Me app icon">
     <h1>Pong Me</h1>
-    <p class="tagline">A gift from our new computer overlords! Classic retro Pong with procedural audio, adjustable AI, and that green-on-black CRT aesthetic. Free for Mac and iPhone.</p>
-    <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
-      Download for macOS
-    </a>
-    <p class="download-note">Free &middot; macOS 12+ &middot; Also available on iOS</p>
+    <p class="tagline">A gift from our new computer overlords! Classic retro Pong with procedural audio, adjustable AI, and that green-on-black CRT aesthetic. Free for Mac, Windows, and iPhone.</p>
+    <div class="download-row">
+      <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
+        Download for macOS
+      </a>
+      <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me-Windows.zip">
+        Download for Windows
+      </a>
+    </div>
+    <p class="download-note">Free &middot; macOS 12+ / Windows 10+ &middot; Also available on iOS</p>
   </section>
 
   <!-- About -->
@@ -337,10 +349,15 @@
   <!-- CTA -->
   <section class="cta">
     <h2>Ready to get ponged?</h2>
-    <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
-      Download for macOS
-    </a>
-    <p class="download-note">Free &middot; macOS 12+ &middot; Also available on iOS</p>
+    <div class="download-row">
+      <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
+        Download for macOS
+      </a>
+      <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me-Windows.zip">
+        Download for Windows
+      </a>
+    </div>
+    <p class="download-note">Free &middot; macOS 12+ / Windows 10+ &middot; Also available on iOS</p>
   </section>
 
   <!-- Footer -->
@@ -359,21 +376,6 @@
       var currentYear = new Date().getFullYear();
       if (yearEl) yearEl.textContent = currentYear > startYear ? startYear + '\u2013' + currentYear : startYear;
 
-      var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      if (isMac) return;
-
-      var buttons = document.querySelectorAll('.download-btn');
-      buttons.forEach(function(btn) {
-        btn.classList.add('disabled');
-        btn.removeAttribute('href');
-        btn.textContent = 'Available for macOS only';
-      });
-
-      var notes = document.querySelectorAll('.download-note');
-      notes.forEach(function(note) {
-        note.classList.add('platform-note');
-        note.textContent = 'Visit this page on a Mac to download Pong Me.';
-      });
     })();
   </script>
 

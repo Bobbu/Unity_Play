@@ -9,6 +9,12 @@ public class BuildScript
         Build("Build/Mac/PongMe.app", BuildTarget.StandaloneOSX);
     }
 
+    [MenuItem("Build/Build Windows")]
+    public static void BuildWindows()
+    {
+        Build("Build/Windows/PongMe.exe", BuildTarget.StandaloneWindows64);
+    }
+
     [MenuItem("Build/Build iOS")]
     public static void BuildIOS()
     {

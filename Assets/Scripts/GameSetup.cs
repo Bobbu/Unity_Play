@@ -499,7 +499,11 @@ public class GameSetup : MonoBehaviour
             "  Touch  -  Drag left side of screen\n" +
             "  R  -  Reset / New game\n" +
             "  M  -  Toggle sound\n" +
+#if !UNITY_WEBGL
             "  Cmd+Q  -  Quit (Mac)\n\n" +
+#else
+            "\n" +
+#endif
             "<b>OBJECTIVE</b>\n" +
             "  First to target score wins.\n" +
             "  Don't let the ball pass\n" +

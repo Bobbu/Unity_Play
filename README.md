@@ -52,6 +52,27 @@ Requires the **Windows Build Support (Mono)** module installed via Unity Hub (In
 - Note: builds are unsigned, so Windows SmartScreen will warn users on first launch (More info → Run anyway).
 - The user-facing `README.txt` lives at `installer/windows-README.txt` and is automatically copied into the zip by the release workflow. (Unity wipes `Build/Windows/` on every rebuild, so the README is not stored there directly.)
 
+### Build for Web (WebGL)
+Requires the **Web Build Support** module installed via Unity Hub.
+- **From Unity:** Build → Build Web
+- **From command line:**
+  ```bash
+  /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
+    -batchmode -nographics \
+    -projectPath "$(pwd)" \
+    -executeMethod BuildScript.BuildWeb \
+    -quit
+  ```
+- Output: `Build/Web/index.html` plus `Build/Web/Build/` (the wasm/data/loader files) and `Build/Web/TemplateData/`. The `BuildWeb` method forces compression to Disabled, so files are uncompressed and the deploy workflow doesn't need Content-Encoding magic.
+- **First build is slow** (5–15 minutes) because Unity has to compile to WebAssembly. Subsequent builds are faster.
+- **Local testing:** WebGL builds won't open from `file://` due to browser security. Use a local web server:
+  ```bash
+  cd Build/Web && python3 -m http.server 8000
+  ```
+  Then visit http://localhost:8000 in your browser.
+- **Deployment:** the release workflow syncs `Build/Web/` to `s3://pong-me.anystupididea.com/play/` on every `v*` tag. The CloudFront distribution has a function that rewrites `/play` and `/play/` to `/play/index.html` so the directory URL works.
+- **Live URL:** https://pong-me.anystupididea.com/play/
+
 ## Controls
 
 | Key | Action |

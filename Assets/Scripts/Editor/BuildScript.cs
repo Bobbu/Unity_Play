@@ -15,6 +15,16 @@ public class BuildScript
         Build("Build/Windows/PongMe.exe", BuildTarget.StandaloneWindows64);
     }
 
+    [MenuItem("Build/Build Web")]
+    public static void BuildWeb()
+    {
+        // Force compression off so the deploy workflow doesn't have to set
+        // Content-Encoding headers per file. Slightly larger over the wire,
+        // but vastly simpler to host on plain S3 + CloudFront.
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+        Build("Build/Web", BuildTarget.WebGL);
+    }
+
     [MenuItem("Build/Build iOS")]
     public static void BuildIOS()
     {

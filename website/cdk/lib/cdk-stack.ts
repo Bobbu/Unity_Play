@@ -29,11 +29,33 @@ export class CdkStack extends cdk.Stack {
       this, 'WildcardCert', WILDCARD_CERT_ARN,
     );
 
+    // CloudFront Function: rewrites /play and /play/ to /play/index.html
+    // (CloudFront's defaultRootObject only handles the bare site root, not subdirectories.)
+    const playRewriteFunction = new cloudfront.Function(this, 'PlayRewriteFunction', {
+      code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+  var request = event.request;
+  var uri = request.uri;
+  if (uri === '/play' || uri === '/play/') {
+    request.uri = '/play/index.html';
+  }
+  return request;
+}
+      `),
+      comment: 'Rewrite /play and /play/ to /play/index.html for the WebGL build',
+    });
+
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [
+          {
+            function: playRewriteFunction,
+            eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          },
+        ],
       },
       domainNames: [DOMAIN_NAME],
       certificate,

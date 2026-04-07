@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pong Me - Classic Retro Pong for Mac, Windows, and iPhone</title>
-  <meta name="description" content="Pong Me is a free retro-styled Pong game for Mac, Windows, and iPhone with procedural audio, AI difficulty, touch controls, and that classic green-on-black CRT look.">
+  <title>Pong Me - Classic Retro Pong, Play in Your Browser or on Mac, Windows, and iPhone</title>
+  <meta name="description" content="Pong Me is a free retro-styled Pong game. Play instantly in your browser, or download for Mac, Windows, and iPhone. Procedural audio, AI difficulty, and that classic green-on-black CRT look.">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://pong-me.anystupididea.com/">
-  <meta property="og:title" content="Pong Me - Classic Retro Pong for Mac, Windows, and iPhone">
-  <meta property="og:description" content="Free retro Pong game for Mac, Windows, and iPhone with procedural audio, adjustable AI, touch controls, and that classic green CRT aesthetic.">
+  <meta property="og:title" content="Pong Me - Play in Browser or Download for Mac, Windows, iPhone">
+  <meta property="og:description" content="Free retro Pong game. Play instantly in your browser, or download for Mac, Windows, and iPhone. Procedural audio, adjustable AI, classic green CRT aesthetic.">
   <meta property="og:image" content="https://pong-me.anystupididea.com/images/Pong_Me_Logo.png">
   <meta property="og:image:width" content="1024">
   <meta property="og:image:height" content="1024">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Pong Me - Classic Retro Pong for Mac, Windows, and iPhone">
-  <meta name="twitter:description" content="Free retro Pong game for Mac, Windows, and iPhone with procedural audio, adjustable AI, touch controls, and that classic green CRT aesthetic.">
+  <meta name="twitter:title" content="Pong Me - Play in Browser or Download for Mac, Windows, iPhone">
+  <meta name="twitter:description" content="Free retro Pong game. Play instantly in your browser, or download for Mac, Windows, and iPhone. Procedural audio, adjustable AI, classic green CRT aesthetic.">
   <meta name="twitter:image" content="https://pong-me.anystupididea.com/images/Pong_Me_Logo.png">
 
   <link rel="icon" type="image/png" href="images/Pong_Me_Logo.png">
@@ -304,8 +304,11 @@
   <section class="hero">
     <img class="app-icon" src="images/Pong_Me_Logo.png" alt="Pong Me app icon">
     <h1>Pong Me</h1>
-    <p class="tagline">A gift from our new computer overlords! Classic retro Pong with procedural audio, adjustable AI, and that green-on-black CRT aesthetic. Free for Mac, Windows, and iPhone.</p>
+    <p class="tagline">A gift from our new computer overlords! Classic retro Pong with procedural audio, adjustable AI, and that green-on-black CRT aesthetic. Play instantly in your browser, or download for Mac, Windows, and iPhone.</p>
     <div class="download-row">
+      <a class="download-btn" href="https://pong-me.anystupididea.com/play/">
+        Play in Browser
+      </a>
       <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
         Download for macOS
       </a>
@@ -313,7 +316,7 @@
         Download for Windows
       </a>
     </div>
-    <p class="download-note">Free &middot; macOS 12+ / Windows 10+ &middot; Also available on iOS</p>
+    <p class="download-note">Free &middot; Browser / macOS 12+ / Windows 10+ &middot; Also available on iOS</p>
   </section>
 
   <!-- About -->
@@ -349,6 +352,10 @@
     <h2>Play Anywhere</h2>
     <div class="features">
       <div class="feature-card">
+        <h3>&#127760; Browser</h3>
+        <p>Zero-friction instant play &mdash; no download, no installer, no SmartScreen warning. Click PRESS START and you're in. Same keyboard controls (W/S, 1/2/3, M, R). Works in any modern desktop browser.</p>
+      </div>
+      <div class="feature-card">
         <h3>&#128187; Mac</h3>
         <p>1920x1080 windowed, resizable. Keyboard controls (W/S to move, 1/2/3 for speed, M for mute, R to reset, Cmd+Q to quit). Mouse clicks for Settings and Help panels.</p>
       </div>
@@ -367,6 +374,9 @@
   <section class="cta">
     <h2>Ready to get ponged?</h2>
     <div class="download-row">
+      <a class="download-btn" href="https://pong-me.anystupididea.com/play/">
+        Play in Browser
+      </a>
       <a class="download-btn" href="https://pong-me.anystupididea.com/Pong-Me.dmg">
         Download for macOS
       </a>
@@ -374,7 +384,7 @@
         Download for Windows
       </a>
     </div>
-    <p class="download-note">Free &middot; macOS 12+ / Windows 10+ &middot; Also available on iOS</p>
+    <p class="download-note">Free &middot; Browser / macOS 12+ / Windows 10+ &middot; Also available on iOS</p>
   </section>
 
   <!-- Footer -->
@@ -400,14 +410,31 @@
       var p = platform.toUpperCase();
       var isMac = p.indexOf('MAC') >= 0 || /Macintosh/i.test(ua);
       var isWindows = p.indexOf('WIN') >= 0 || /Windows/i.test(ua);
-
-      if (!isMac && !isWindows) return; // Linux, mobile, etc. — leave both buttons equal.
+      var isLinux = p.indexOf('LINUX') >= 0 || /Linux/i.test(ua);
+      var isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
 
       var macButtons = document.querySelectorAll('a.download-btn[href$=".dmg"]');
       var winButtons = document.querySelectorAll('a.download-btn[href$=".zip"]');
+      var playButtons = document.querySelectorAll('a.download-btn[href$="/play/"]');
 
-      var demote = isMac ? winButtons : macButtons;
-      demote.forEach(function(btn) { btn.classList.add('secondary'); });
+      function demote(buttons) {
+        buttons.forEach(function(btn) { btn.classList.add('secondary'); });
+      }
+
+      if (isMac) {
+        // Mac: emphasize the DMG, de-emphasize everything else
+        demote(winButtons);
+        demote(playButtons);
+      } else if (isWindows) {
+        // Windows: emphasize the ZIP
+        demote(macButtons);
+        demote(playButtons);
+      } else if (isLinux) {
+        // Linux: only the browser version is usable, emphasize it
+        demote(macButtons);
+        demote(winButtons);
+      }
+      // Mobile or unknown: leave all three buttons equal — user knows their context.
     })();
   </script>
 

@@ -1,0 +1,73 @@
+name: Deploy WebGL Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release-web:
+    runs-on: ubuntu-latest
+    env:
+      S3_BUCKET: "pong-me.anystupididea.com"
+      CLOUDFRONT_DIST_ID: "E29XY0JV1L6QI"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Web build exists
+        run: |
+          if [ ! -f "Build/Web/index.html" ]; then
+            echo "ERROR: Build/Web/index.html not found."
+            echo "Build the WebGL target locally in Unity (Build > Build Web) and commit Build/Web/ before tagging."
+            exit 1
+          fi
+
+      - name: Sync Web build to S3 /play/ (default content types)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          aws s3 sync Build/Web/ "s3://$S3_BUCKET/play/" \
+            --delete \
+            --exclude "*.wasm" \
+            --exclude "*.data"
+
+      - name: Upload .wasm files with application/wasm content type
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          find Build/Web -type f -name "*.wasm" | while read f; do
+            rel="${f#Build/Web/}"
+            aws s3 cp "$f" "s3://$S3_BUCKET/play/$rel" \
+              --content-type "application/wasm"
+          done
+
+      - name: Upload .data files with application/octet-stream content type
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          find Build/Web -type f -name "*.data" | while read f; do
+            rel="${f#Build/Web/}"
+            aws s3 cp "$f" "s3://$S3_BUCKET/play/$rel" \
+              --content-type "application/octet-stream"
+          done
+
+      - name: Invalidate CloudFront /play/*
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DIST_ID" \
+            --paths "/play/*" "/play"

@@ -15,10 +15,18 @@ Unity 2D Pong game ("Pong Me" by Any Stupid Idea / CatalystApps) — a fully pro
 
 ## Build
 
-- **Editor:** Build > Build Mac / Build > Build Windows (provided by `Assets/Scripts/Editor/BuildScript.cs`)
-- **CLI:** Close Unity first, then run the batch build command (see README.md). Methods: `BuildScript.BuildMac`, `BuildScript.BuildWindows`, `BuildScript.BuildIOS`.
-- **Output:** `Build/Mac/PongMe.app` or `Build/Windows/PongMe.exe` (Windows requires the entire `Build/Windows/` folder to be distributed together)
+- **Editor:** Build > Build Mac / Build Windows / Build Web (provided by `Assets/Scripts/Editor/BuildScript.cs`)
+- **CLI:** Close Unity first, then run the batch build command (see README.md). Methods: `BuildScript.BuildMac`, `BuildScript.BuildWindows`, `BuildScript.BuildWeb`, `BuildScript.BuildIOS`.
+- **Output:** `Build/Mac/PongMe.app`, `Build/Windows/PongMe.exe` (entire folder must ship together), or `Build/Web/index.html` (entire folder must deploy together).
 - **Windows requires:** Windows Build Support (Mono) module installed via Unity Hub. IL2CPP isn't available when building from a Mac host.
+- **WebGL requires:** Web Build Support module. `BuildScript.BuildWeb` forces compression to Disabled so the deploy workflow doesn't need to set Content-Encoding headers per file.
+
+## Release flow
+
+Tag a `v*` release after committing fresh `Build/Mac/`, `Build/Windows/`, and `Build/Web/`. Three GitHub Actions fan out in parallel:
+- `release-macos.yml` → signs, notarizes, staples, builds DMG, uploads to S3, attaches to GitHub release
+- `release-windows.yml` → zips `Build/Windows/`, uploads to S3, attaches to GitHub release
+- `release-web.yml` → syncs `Build/Web/` to `s3://bucket/play/` (with proper Content-Type for `.wasm` and `.data`), invalidates CloudFront `/play/*`
 
 ## Architecture
 

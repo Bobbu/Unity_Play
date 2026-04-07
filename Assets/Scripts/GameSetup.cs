@@ -15,8 +15,10 @@ public class GameSetup : MonoBehaviour
 
     void BuildGame()
     {
-#if !UNITY_IOS
-        // Force windowed mode on desktop builds
+#if !UNITY_IOS && !UNITY_WEBGL
+        // Force windowed mode on desktop builds.
+        // Skipped on WebGL: browsers control canvas sizing via the WebGL
+        // template's CSS, and calling SetResolution can confuse the layout.
         Screen.fullScreenMode = FullScreenMode.Windowed;
         Screen.SetResolution(1920, 1080, false);
 #endif
@@ -148,7 +150,14 @@ public class GameSetup : MonoBehaviour
         safeRt.anchorMax = Vector2.one;
         safeRt.offsetMin = Vector2.zero;
         safeRt.offsetMax = Vector2.zero;
+#if !UNITY_WEBGL
+        // Browsers have no notion of safe area; SafeAreaHandler can produce
+        // bad anchors on WebGL because Screen.safeArea doesn't agree with
+        // Screen.width/height. Skip it entirely on web — the (0,0)-(1,1)
+        // anchors set above are exactly what we want.
         safeArea.AddComponent<SafeAreaHandler>();
+#endif
+
 
         // --- Scores (above the top border line) ---
         TextMeshProUGUI leftScoreText = CreateScoreText(safeArea.transform, "LeftScore", -200f);

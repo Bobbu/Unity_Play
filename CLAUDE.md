@@ -15,11 +15,16 @@ Unity 2D Pong game ("Pong Me" by Any Stupid Idea / CatalystApps) — a fully pro
 
 ## Build
 
-- **Editor:** Build > Build Mac / Build Windows / Build Web (provided by `Assets/Scripts/Editor/BuildScript.cs`)
-- **CLI:** Close Unity first, then run the batch build command (see README.md). Methods: `BuildScript.BuildMac`, `BuildScript.BuildWindows`, `BuildScript.BuildWeb`, `BuildScript.BuildIOS`.
-- **Output:** `Build/Mac/PongMe.app`, `Build/Windows/PongMe.exe` (entire folder must ship together), or `Build/Web/index.html` (entire folder must deploy together).
+- **Editor:** Build > Build Mac / Build Windows / Build Web / Build iOS / **Build All (Mac + Windows + Web + iOS)** (provided by `Assets/Scripts/Editor/BuildScript.cs`)
+- **CLI:** Close Unity first, then run the batch build command (see README.md). Methods: `BuildScript.BuildMac`, `BuildScript.BuildWindows`, `BuildScript.BuildWeb`, `BuildScript.BuildIOS`, `BuildScript.BuildAll`.
+- **Output:** `Build/Mac/PongMe.app`, `Build/Windows/PongMe.exe` (entire folder must ship together), `Build/Web/index.html` (entire folder must deploy together), or `Build/iOS/Unity-iPhone.xcodeproj` (Xcode project — not a final `.ipa`).
 - **Windows requires:** Windows Build Support (Mono) module installed via Unity Hub. IL2CPP isn't available when building from a Mac host.
-- **WebGL requires:** Web Build Support module. `BuildScript.BuildWeb` forces compression to Disabled so the deploy workflow doesn't need to set Content-Encoding headers per file.
+- **WebGL requires:** Web Build Support module. `BuildScript.BuildWeb` forces compression to Disabled so the deploy workflow doesn't need to set Content-Encoding headers per file. Uses the custom `Assets/WebGLTemplates/PongMe/` template (avoids the default template's translate(-50%, -50%) clipping bug).
+- **iOS requires:** iOS Build Support module + Xcode. The Unity build only generates the Xcode project — see README.md "Build for iOS" for the manual signing/archive/upload steps.
+
+## Build All — what it actually does
+
+`Build → Build All` runs Mac → Windows → Web → iOS in sequence. **Mac, Windows, and Web are fully ready to ship after Build All completes.** iOS only generates the Xcode project; the developer still has to do the manual Xcode signing/archive/App Store Connect upload flow afterward. There is no automated iOS release pipeline. Realistic full-build time: 15–30 minutes cold.
 
 ## Release flow
 
@@ -27,6 +32,8 @@ Tag a `v*` release after committing fresh `Build/Mac/`, `Build/Windows/`, and `B
 - `release-macos.yml` → signs, notarizes, staples, builds DMG, uploads to S3, attaches to GitHub release
 - `release-windows.yml` → zips `Build/Windows/`, uploads to S3, attaches to GitHub release
 - `release-web.yml` → syncs `Build/Web/` to `s3://bucket/play/` (with proper Content-Type for `.wasm` and `.data`), invalidates CloudFront `/play/*`
+
+iOS is **not** part of this automated flow. iOS is shipped manually through Xcode → App Store Connect.
 
 ## Architecture
 

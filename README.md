@@ -73,6 +73,47 @@ Requires the **Web Build Support** module installed via Unity Hub.
 - **Deployment:** the release workflow syncs `Build/Web/` to `s3://pong-me.anystupididea.com/play/` on every `v*` tag. The CloudFront distribution has a function that rewrites `/play` and `/play/` to `/play/index.html` so the directory URL works.
 - **Live URL:** https://pong-me.anystupididea.com/play/
 
+### Build for iOS
+Requires the **iOS Build Support** module installed via Unity Hub, plus **Xcode** installed on a Mac.
+- **From Unity:** Build → Build iOS
+- **From command line:**
+  ```bash
+  /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
+    -batchmode -nographics \
+    -projectPath "$(pwd)" \
+    -executeMethod BuildScript.BuildIOS \
+    -quit
+  ```
+- **Output: `Build/iOS/` is an Xcode project, NOT a final `.ipa`.** Unlike the other targets, you cannot ship iOS straight from Unity. The Unity build only generates the Xcode project; everything after that is manual.
+
+#### iOS post-build manual steps (required to actually ship)
+1. Open the generated Xcode project: `open Build/iOS/Unity-iPhone.xcodeproj`
+2. **Set the signing team:** select the `Unity-iPhone` target → Signing & Capabilities → choose your Apple Developer team. Without this, archiving will fail.
+3. **Set the bundle identifier** if needed (e.g., `com.anystupididea.pongme`).
+4. **Connect a physical iPhone or pick a simulator** in the device dropdown to verify the build compiles.
+5. **Test on device** (Cmd+R) before archiving.
+6. **Archive for distribution:** Product → Archive. Wait for the archive to finish (a few minutes).
+7. **Validate and upload:** in the Organizer window that opens, click "Distribute App" → "App Store Connect" → "Upload". Xcode will validate, sign, and upload the build.
+8. **Submit for review** in App Store Connect (or release to TestFlight first for internal testing).
+
+There is intentionally **no GitHub Action for iOS releases** — the manual Xcode steps and Apple Developer signing flow are not amenable to a one-click pipeline without significant additional infrastructure (App Store Connect API keys, fastlane, etc.). For now, iOS is a hand-driven release.
+
+### Build All (one-click multi-target)
+- **From Unity:** Build → Build All (Mac + Windows + Web + iOS)
+- **From command line:**
+  ```bash
+  /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
+    -batchmode -nographics \
+    -projectPath "$(pwd)" \
+    -executeMethod BuildScript.BuildAll \
+    -quit
+  ```
+- **What "Build All" actually does:**
+  - **Mac, Windows, Web** → fully built and ready to ship. Just commit `Build/Mac/`, `Build/Windows/`, `Build/Web/` and tag a `v*` release. The three GitHub Actions workflows handle signing, packaging, S3 upload, and CloudFront invalidation automatically.
+  - **iOS** → only generates the Xcode project at `Build/iOS/`. **You still need to do all the manual Xcode steps above** (signing, archiving, App Store Connect upload). "Build All" does not — and cannot — ship iOS for you.
+- **Time:** realistic 15–30 minutes for a cold full build (each platform switch reimports a small number of assets, and the WebGL target compiles to WebAssembly which is the slowest piece). Subsequent runs are faster. Plan to walk away from the keyboard.
+- **Stops on first failure:** if any individual build fails, the rest don't run. Watch the Unity console for `[BuildAll]` log lines.
+
 ## Controls
 
 | Key | Action |
